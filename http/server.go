@@ -19,19 +19,21 @@ type Server struct {
 }
 
 // NewServer creates a new Server
-func NewServer(ps gowiki.PageService) *Server {
+func NewServer(ps gowiki.PageService, r gowiki.Renderer) *Server {
+	pc := newPageController(ps, r)
 	s := &Server{defaultPort}
 
-	http.HandleFunc("/view/", makeHandler(view, ps))
-	http.HandleFunc("/edit/", makeHandler(edit, ps))
-	http.HandleFunc("/save/", makeHandler(save, ps))
+	http.HandleFunc("/view/", makeHandler(pc.view))
+	http.HandleFunc("/edit/", makeHandler(pc.edit))
+	http.HandleFunc("/save/", makeHandler(pc.save))
 
 	return s
 }
 
 // Start will serve the application.
-func (ph *Server) Start() {
-	log.Printf("About to listen on port: %v", ph.Port)
+func (s *Server) Serve() {
 
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", ph.Port), nil))
+	log.Printf("About to listen on port: %v", s.Port)
+
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", s.Port), nil))
 }

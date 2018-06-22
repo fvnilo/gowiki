@@ -1,13 +1,15 @@
 package main
 
 import (
+	"github.com/nylo-andry/gowiki/blackfriday"
 	"github.com/nylo-andry/gowiki/http"
 	"github.com/nylo-andry/gowiki/io"
 )
 
 func main() {
-	ps := &io.PageService{}
-	s := http.NewServer(ps)
+	ps := io.NewPageService()
+	r := &blackfriday.Renderer{}
+	s := http.NewServer(ps, r)
 
-	s.Start()
+	s.Serve()
 }
