@@ -19,8 +19,8 @@ type Server struct {
 }
 
 // NewServer creates a new Server
-func NewServer(ps gowiki.PageService, r gowiki.Renderer) *Server {
-	pc := newPageController(ps, r)
+func NewServer(ps gowiki.PageService) *Server {
+	pc := newPageController(ps)
 	s := &Server{defaultPort}
 
 	http.HandleFunc("/view/", makeHandler(pc.view))

@@ -5,11 +5,11 @@ import (
 	"net/http"
 
 	"github.com/nylo-andry/gowiki"
+	blackfriday "gopkg.in/russross/blackfriday.v2"
 )
 
 type pageController struct {
 	pageService gowiki.PageService
-	renderer    gowiki.Renderer
 }
 
 type ViewModel struct {
@@ -17,14 +17,14 @@ type ViewModel struct {
 	Body  template.HTML
 }
 
-func newPageController(ps gowiki.PageService, r gowiki.Renderer) *pageController {
-	return &pageController{ps, r}
+func newPageController(ps gowiki.PageService) *pageController {
+	return &pageController{ps}
 }
 
-func (h *pageController) save(w http.ResponseWriter, r *http.Request, title string) {
+func (pc *pageController) save(w http.ResponseWriter, r *http.Request, title string) {
 	body := r.FormValue("body")
 	p := &gowiki.Page{Title: title, Body: body}
-	err := h.pageService.Save(p)
+	err := pc.pageService.Save(p)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -32,20 +32,25 @@ func (h *pageController) save(w http.ResponseWriter, r *http.Request, title stri
 	http.Redirect(w, r, "/view/"+title, http.StatusFound)
 }
 
-func (h *pageController) view(w http.ResponseWriter, r *http.Request, title string) {
-	p, err := h.pageService.LoadPage(title)
+func (pc *pageController) view(w http.ResponseWriter, r *http.Request, title string) {
+	p, err := pc.pageService.LoadPage(title)
 	if err != nil {
 		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
 		return
 	}
-	body := h.renderer.ToHtml(p.Body)
+	body := toHTML(p.Body)
 	renderTemplate(w, "view", ViewModel{p.Title, body})
 }
 
-func (h *pageController) edit(w http.ResponseWriter, r *http.Request, title string) {
-	p, err := h.pageService.LoadPage(title)
+func (pc *pageController) edit(w http.ResponseWriter, r *http.Request, title string) {
+	p, err := pc.pageService.LoadPage(title)
 	if err != nil {
 		p = &gowiki.Page{Title: title}
 	}
 	renderTemplate(w, "edit", p)
+}
+
+func toHTML(markdown string) template.HTML {
+	htmlContent := blackfriday.Run([]byte(markdown))
+	return template.HTML(htmlContent)
 }
